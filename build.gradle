@@ -1,2 +1,14 @@
+plugins {
+    id "com.diffplug.gradle.spotless" version "3.6.0"
+}
+
 apply plugin: 'java'
 apply plugin: 'application'
+
+mainClassName = 'im.adium.backuptogmail.Main'
+
+spotless {
+    java {
+        googleJavaFormat()
+    }
+}
