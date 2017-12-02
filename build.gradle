@@ -1,4 +1,5 @@
 plugins {
+    id "net.ltgt.apt" version "0.13"
     id "com.diffplug.gradle.spotless" version "3.6.0"
 }
 
@@ -11,4 +12,13 @@ spotless {
     java {
         googleJavaFormat()
     }
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    compileOnly "com.google.auto.value:auto-value:1.5"
+    apt         "com.google.auto.value:auto-value:1.5"
 }
