@@ -1,5 +1,6 @@
 package im.adium.backuptogmail.parser;
 
+import com.google.common.base.Preconditions;
 import im.adium.backuptogmail.model.Conversation;
 import im.adium.backuptogmail.model.Message;
 import java.io.IOException;
@@ -20,7 +21,13 @@ public class HtmlConversationParser {
   private static final DateTimeFormatter TIMESTAMP_FORMATTER =
       new DateTimeFormatterBuilder().appendPattern("h:mm:ss a").toFormatter();
 
-  public static Conversation parse(Path path) throws IOException {
+  private final String screenname;
+
+  public HtmlConversationParser(String screenname) {
+    this.screenname = Preconditions.checkNotNull(screenname);
+  }
+
+  public Conversation parse(Path path) throws IOException {
     Document document = Jsoup.parse(path.toFile(), "UTF8");
     LocalDate date = Util.getDate(path);
     List<Message> messages =
@@ -31,14 +38,22 @@ public class HtmlConversationParser {
             .map((e) -> getMessage(date, e))
             .collect(Collectors.toList());
 
-    Set<String> particpants = messages.stream().map(Message::getSender).collect(Collectors.toSet());
+    Set<String> participants =
+        messages.stream().map(Message::getSender).collect(Collectors.toSet());
+    participants.add(screenname);
+    if (participants.size() == 1) {
+      participants.add(Util.getReceipient(screenname, path));
+    }
 
-    return Conversation.create(particpants, messages);
+    return Conversation.create(participants, messages);
   }
 
-  private static Message getMessage(LocalDate date, Element div) {
+  private Message getMessage(LocalDate date, Element div) {
     String senderVal = div.select(".sender").first().text();
     String sender = senderVal.substring(0, senderVal.indexOf(":"));
+    if (sender.contains("(Autoreply")) {
+      sender = sender.replace(" (Autoreply)", "");
+    }
     LocalDateTime timestamp =
         date.atTime(LocalTime.parse(div.select(".timestamp").first().text(), TIMESTAMP_FORMATTER));
     String message = div.select(".message").first().text();

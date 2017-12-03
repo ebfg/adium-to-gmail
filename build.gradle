@@ -1,6 +1,7 @@
 plugins {
     id "net.ltgt.apt" version "0.13"
     id "com.diffplug.gradle.spotless" version "3.6.0"
+    id "net.ltgt.errorprone" version "0.0.13"
 }
 
 apply plugin: 'java'
@@ -21,5 +22,8 @@ repositories {
 dependencies {
     compileOnly "com.google.auto.value:auto-value:1.5"
     apt         "com.google.auto.value:auto-value:1.5"
+    compile     "com.google.apis:google-api-services-gmail:v1-rev73-1.23.0"
+    compile     "com.google.guava:guava:23.5-jre"
     compile     "org.jsoup:jsoup:1.11.2"
+    compile     "javax.mail:mail:1.4.7"
 }

@@ -1,5 +1,6 @@
 package im.adium.backuptogmail.parser;
 
+import com.google.common.base.Preconditions;
 import im.adium.backuptogmail.model.Conversation;
 import im.adium.backuptogmail.model.Message;
 import java.io.IOException;
@@ -25,21 +26,32 @@ public class XmlMessageParser {
           .appendOffset("+HHMM", "")
           .toFormatter();
 
-  public static Conversation parse(Path path) throws IOException {
+  private final String screenname;
+
+  public XmlMessageParser(String screenname) {
+    this.screenname = Preconditions.checkNotNull(screenname);
+  }
+
+  public Conversation parse(Path path) throws IOException {
     Document document = Jsoup.parse(path.toFile(), "UTF8");
     List<Message> messages =
         document
             .select("message")
             .stream()
-            .map(XmlMessageParser::getMessage)
+            .map(this::getMessage)
             .filter(Optional::isPresent)
             .map(Optional::get)
             .collect(Collectors.toList());
-    Set<String> particpants = messages.stream().map(Message::getSender).collect(Collectors.toSet());
-    return Conversation.create(particpants, messages);
+    Set<String> participants =
+        messages.stream().map(Message::getSender).collect(Collectors.toSet());
+    participants.add(screenname);
+    if (participants.size() == 1) {
+      participants.add(Util.getReceipient(screenname, path));
+    }
+    return Conversation.create(participants, messages);
   }
 
-  private static Optional<Message> getMessage(Element messageElem) {
+  private Optional<Message> getMessage(Element messageElem) {
     Element message = messageElem.select("span").first();
     if (message == null) {
       return Optional.empty();
